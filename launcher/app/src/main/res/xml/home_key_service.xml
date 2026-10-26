@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Local event-only Home redirect. No static event subscription: HomeKeyService subscribes only
+     after validating the configured package and exact HOME class. No key-filter flag/capability
+     and no window-content retrieval capability. InputKeyService remains separately disabled. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:description="@string/home_key_description" />

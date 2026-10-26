@@ -1,0 +1,48 @@
+{
+  "upstream": "https://github.com/Gathin23/cleanyourtv",
+  "public_source_base_commit": "0bb7f7edbf53349c7975a29495515453ed850526",
+  "not_rebased_onto_current_upstream": true,
+  "source_version": "2.6-hisense-native.2-source.2",
+  "implementation": "native2 clock-calibrated Home trial plus narrow source.2 preparation fixes",
+  "earlier_device_acceptance": "Earlier native2 local implementation only; not this source revision",
+  "no_tv_install_or_hardware_acceptance_of_this_snapshot": true,
+  "application_id": "com.gathin.tvhome",
+  "distribution_scope": "Research source only; no binary, installer, coexistence or maintenance promise",
+  "release_output_signed": false,
+  "native_opt_in_default": false,
+  "differences_from_earlier_tv_build": [
+    "Public baseline config replaces personal appearance; empty legacy redirect class retained.",
+    "Start admission/delivery is idempotent; pending ownership is released on service destruction.",
+    "Matching session barriers guard stale asynchronous failure Stop/error writes.",
+    "Control UI reports runtime/clock readiness separately from saved boot opt-in.",
+    "Accessibility wording accurately excludes any enabled service; needed accessibility stays needed.",
+    "26 JVM regressions added; these are not Android integration or hardware tests.",
+    "Source.2 version and unsigned release build; automatic install/debloat scripts excluded."
+  ],
+  "comparison_to_earlier_native2_app_src": {
+    "byte_identical_count": 159,
+    "changed_paths": [
+      "app/src/main/java/com/gathin/tvhome/HomeNativeControlActivity.java",
+      "app/src/main/java/com/gathin/tvhome/HomeNativeService.java",
+      "app/src/main/java/com/gathin/tvhome/NativeHomeAccess.java",
+      "app/src/main/java/com/gathin/tvhome/NativeHomeSession.java",
+      "app/src/main/res/values/config.xml",
+      "app/src/main/res/values/native_home_strings.xml"
+    ],
+    "added_paths": [
+      "app/src/main/java/com/gathin/tvhome/NativeHomeStatus.java",
+      "app/src/test/java/com/gathin/tvhome/NativeHomeStartAdmissionTest.java",
+      "app/src/test/java/com/gathin/tvhome/NativeHomeStatusTest.java"
+    ],
+    "personal_config_read_or_copied": false
+  },
+  "owner_specific_data_included": false,
+  "theme_or_wallpaper_pack_included": false,
+  "hardware_limits": [
+    "Pure JVM admission/session/status regression coverage does not exercise actual Android service delivery or UI lifecycle.",
+    "Immediate Stop/Start during observer teardown fails closed and requires retry after teardown.",
+    "A stale in-flight clock confirmation can conservatively invalidate its observer; the new guard rejects stale Stop/error writes, not every transient availability loss.",
+    "Research source retains the original package identity; no independent installer or coexistence claim."
+  ],
+  "publication_scope": "Owner-approved research source only; no binary, installer, expanded support or hardware-validation claim"
+}

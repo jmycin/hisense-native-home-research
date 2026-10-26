@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_home_title" translatable="false">Native Home trial</string>
+    <string name="native_home_start" translatable="false">Start</string>
+    <string name="native_home_stop" translatable="false">Stop</string>
+    <string name="native_home_usage" translatable="false">Usage Access</string>
+    <string name="native_home_notification" translatable="false">Home trial is on. Choose Stop to end it.</string>
+    <string name="native_home_help" translatable="false">Usage Access lets this trial check app transitions around a Home press. It keeps only the current state in memory and saves no activity history. It needs a fresh transition to the original Home; if Home is already visible, it may stay there. A notification provides Stop. While enabled, it can restart after the TV restarts; if Android stops it during use, choose Start again. Turn it off here or from its notification.</string>
+    <string name="native_home_starting" translatable="false">Starting: the observer is calibrating. Start is unavailable until this attempt finishes. Stop cancels it.</string>
+    <string name="native_home_running" translatable="false">Running: the observer is calibrated and ready for a fresh Home transition. Choose Stop to end it.</string>
+    <string name="native_home_paused" translatable="false">The saved startup opt-in is on, but the observer is not running. Choose Start to try again or Stop to clear the opt-in.</string>
+    <string name="native_home_failed" translatable="false">The observer is off. The last attempt failed (%1$s). Original Home remains available; choose Start to retry after it stops.</string>
+    <string name="native_home_disabled" translatable="false">Trial is off. Grant Usage Access separately, then choose Start when ready.</string>
+</resources>
