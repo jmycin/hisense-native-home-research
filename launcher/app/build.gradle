@@ -12,7 +12,7 @@ android {
         minSdk 26
         targetSdk 34
         versionCode 7
-        versionName '2.6-hisense-native.2-source.2'
+        versionName '2.6-hisense-native.2-source.3'
     }
 
     buildTypes {

@@ -67,7 +67,7 @@ public final class HomeNativeControlActivity extends Activity {
     }
 
     private void startTrial() {
-        String problem = NativeHomeAccess.start(this);
+        String problem = NativeHomeAccess.startFromUser(this);
         if (problem != null) Toast.makeText(this, problem, Toast.LENGTH_LONG).show();
     }
 

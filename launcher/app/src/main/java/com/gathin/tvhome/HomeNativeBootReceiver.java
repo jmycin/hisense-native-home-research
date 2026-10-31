@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-/** Boot is the only automatic restart path, and only for a previously opted-in compatible TV. */
+/** Guarded boot restart for a previously opted-in TV; does not reset the OS-recovery budget. */
 public final class HomeNativeBootReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
         if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())

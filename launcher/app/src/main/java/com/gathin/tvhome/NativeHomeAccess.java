@@ -9,6 +9,7 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -18,6 +19,8 @@ import android.os.Process;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserManager;
+import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.Toast;
@@ -27,6 +30,8 @@ final class NativeHomeAccess {
     static final String PREFS = "native_home_trial", ENABLED = "enabled";
     static final NativeHomeSession SESSION = new NativeHomeSession();
     private static final int STOP_ERROR_NOTIFICATION = 7311;
+    private static final String RECOVERY_BOOT = "recovery_boot", RECOVERY_ATTEMPTS = "recovery_attempts",
+            RECOVERY_BEGAN = "recovery_window_began_elapsed";
     private static final String STOP_ERROR = "Home redirection is blocked in this process, but the "
             + "saved off choice could not be confirmed. Retry Stop before restarting the TV.";
     static final ComponentName BROKER = new ComponentName(NativeHomePolicy.STOCK_PACKAGE,
@@ -84,7 +89,11 @@ final class NativeHomeAccess {
         }
     }
 
-    static String start(Context context) {
+    static String start(Context context) { return start(context, false); }
+
+    static String startFromUser(Context context) { return start(context, true); }
+
+    private static String start(Context context, boolean userRequested) {
         synchronized (SESSION) {
             try {
                 NativeHomeSession.StartRequest request = SESSION.requestStartIfIdle(() -> problem(context));
@@ -93,8 +102,10 @@ final class NativeHomeAccess {
                 if (!setEnabled(context, true)) {
                     return stop(context) == null ? "The trial choice could not be saved." : STOP_ERROR;
                 }
+                if (userRequested) resetRecoveryBudget(context);
                 context.startForegroundService(new Intent(context, HomeNativeService.class)
                         .setAction(HomeNativeService.START).putExtra("session_ticket", request.ticket));
+                SESSION.startSubmitted(request.ticket);
                 return null;
             } catch (RuntimeException unavailable) {
                 return stop(context) == null
@@ -103,11 +114,60 @@ final class NativeHomeAccess {
         }
     }
 
+    static long processRecoveryTicket(Context context) {
+        synchronized (SESSION) {
+            return SESSION.requestProcessRecovery(() -> enabled(context),
+                    () -> problem(context) == null, () -> {
+                        try {
+                            return NativeHomeRecoveryBudget.claim(recoveryStore(context),
+                                    Settings.Global.getInt(context.getContentResolver(),
+                                            Settings.Global.BOOT_COUNT, -1), SystemClock.elapsedRealtime());
+                        } catch (RuntimeException unavailable) { return false; }
+                    });
+        }
+    }
+
+    private static void resetRecoveryBudget(Context context) {
+        try {
+            // An explicit UI/shell Start may reset the limit. Boot and OS recreation never do.
+            NativeHomeRecoveryBudget.resetForUserStart(recoveryStore(context),
+                    Settings.Global.getInt(context.getContentResolver(), Settings.Global.BOOT_COUNT, -1),
+                    SystemClock.elapsedRealtime());
+        } catch (RuntimeException unavailable) {
+            // A manual start is still useful; an unreadable/uncommittable restart budget fails closed.
+        }
+    }
+
+    private static NativeHomeRecoveryBudget.Store recoveryStore(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return new NativeHomeRecoveryBudget.Store() {
+            @Override public NativeHomeRecoveryBudget.State read() {
+                boolean boot = prefs.contains(RECOVERY_BOOT), attempts = prefs.contains(RECOVERY_ATTEMPTS),
+                        began = prefs.contains(RECOVERY_BEGAN);
+                if (!boot && !attempts && !began) return null;
+                if (!boot || !attempts || !began) throw new IllegalStateException("Incomplete recovery budget");
+                return new NativeHomeRecoveryBudget.State(prefs.getInt(RECOVERY_BOOT, -1),
+                        prefs.getInt(RECOVERY_ATTEMPTS, -1), prefs.getLong(RECOVERY_BEGAN, -1));
+            }
+            @Override public boolean write(NativeHomeRecoveryBudget.State value) {
+                return prefs.edit().putInt(RECOVERY_BOOT, value.boot)
+                        .putInt(RECOVERY_ATTEMPTS, value.attempts)
+                        .putLong(RECOVERY_BEGAN, value.beganElapsed).commit();
+            }
+        };
+    }
+
     static String stop(Context context) {
         boolean saved;
         synchronized (SESSION) {
-            saved = SESSION.stop(() -> setEnabled(context, false));
-            context.stopService(new Intent(context, HomeNativeService.class));
+            saved = SESSION.stop(() -> {
+                // Cancel a pending framework restart before the potentially slow saved-off commit.
+                try { context.stopService(new Intent(context, HomeNativeService.class)); }
+                catch (RuntimeException unavailable) {
+                    // Still attempt durable opt-out; restoration separately verifies service absence.
+                }
+                return setEnabled(context, false);
+            });
         }
         if (!saved) reportStopFailure(context);
         else {

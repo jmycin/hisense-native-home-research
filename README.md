@@ -7,8 +7,8 @@ accessibility service or intercepting remote keys.
 
 **Status: experimental research source, not a general Hisense installation recommendation.**
 No binary release or supported installer is supplied. This project is separate from the small
-upstream reference launcher, which intentionally excludes background services. The source.2
-changes have host checks only; earlier device acceptance does not validate this revision.
+upstream reference launcher, which intentionally excludes background services. The source.3
+recovery port has host checks only; earlier device trials do not validate this merged revision.
 
 The identity decision is **research source only**: retain the original application ID for review,
 publish no installable binary or installer, and make no coexistence or maintenance promise.
@@ -28,11 +28,14 @@ The earlier `2.6-hisense-native.2` implementation was tested on one owner-identi
 | Reviewed original Home version code | `1010943512` |
 
 Earlier owner checks covered Home, held-volume adjustment, PS5 picture and Sonos sound, Input,
-Settings, apps, casting and a controlled normal restart followed by YouTube â†’ Home. Those observations
-apply to that earlier local build and configuration. This unsigned source snapshot has different
-default appearance configuration and subsequent Start/lifecycle/status fixes; it has **not** been
-installed or tested on the TV. It is not a claim of support for all TVs with the same marketing name
-or SoC.
+Settings, apps, casting and a controlled normal restart followed by YouTube → Home. Those observations
+apply to that earlier local build and configuration. A later local recovery build passed a controlled
+process-crash restart, explicit Stop, normal reboot startup, and Home from a manually started
+screensaver on the same unit. See [Recovery](RECOVERY.md) for the limits of those observations.
+
+This unsigned source.3 snapshot combines that recovery mechanism with the public source.2
+Start/lifecycle/status fixes and baseline appearance. It has **not** been installed or tested on the
+TV. Neither earlier trial establishes support for all TVs with the same marketing name or SoC.
 
 ## What the bridge does
 
@@ -45,11 +48,20 @@ or SoC.
   transitions, clock ambiguity, unsupported versions or missing prerequisites.
 - Treats repeated Start requests as one attempt while starting/running. The control screen shows
   observer readiness separately from the saved startup opt-in.
+- Permits Android to recreate a killed observer while the retained opt-in and requirements hold.
+  Process-recreation admissions have a persisted limit of two per anchored ten-minute window; there is no
+  watchdog or scheduled retry after exhaustion. Explicit Stop cancels the service and saves Off.
 - Leaves the original Home, original Input panel and TV/audio/casting/network packages intact.
 
 Usage Access is a broad Android permission. The code's narrower use is enforced in this source,
 not by a narrower permission grant. It retains current transition state in memory and does not
-store usage history or send it over a network. The launcher declares no `INTERNET` permission.
+store usage history or send it over a network. Recovery adds only three private startup-accounting
+values: boot count, window start in elapsed time, and attempt count. The launcher declares no
+`INTERNET` permission.
+
+One known Home limitation remains: if Google Home is already visible, another Home press may not
+produce the fresh foreground event required by the policy. Open the app named **Home** from Google's
+Apps tab to return to the replacement. Do not disable the original launcher to hide this limitation.
 
 This implementation refuses to start while **any accessibility service is enabled**. It is not
 appropriate for someone who depends on an accessibility service; do not disable needed accessibility
@@ -72,10 +84,10 @@ stock APKs in this source candidate. The release build is unsigned. The default 
 ID. Do not uninstall an existing installation merely to get around a signing mismatch.
 
 The source derives from upstream commit `0bb7f7edbf53349c7975a29495515453ed850526`, not current main.
-The earlier native2 implementation is followed by narrow preparation fixes described in
+The earlier native2 implementation is followed by preparation and recovery fixes described in
 [Build](BUILD.md). Personal appearance settings were replaced with upstream defaults and an empty
 legacy redirect resource needed to compile the retained helper code. Version
-`2.6-hisense-native.2-source.2` and unsigned release output identify this source revision. Upstream
+`2.6-hisense-native.2-source.3` and unsigned release output identify this source revision. Upstream
 automatic install/debloat scripts are deliberately excluded because their Home handover is a
 different design. Do not use those scripts to deploy this experiment.
 

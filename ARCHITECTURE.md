@@ -17,8 +17,39 @@ pending ownership is tracked so destruction can release it. Startup and Home-win
 run inside the matching session barrier, so an old query failure cannot stop a newer attempt.
 The control screen reads session/runtime/clock state rather than treating the saved boot opt-in as
 proof of a running observer. Its 250 ms display refresh exists only while that screen is resumed and
-does not query UsageEvents. These preparation changes have JVM coverage, not new Android integration
-or device acceptance.
+does not query UsageEvents. These preparation changes remain in source.3; the merged snapshot has
+JVM coverage, not Android integration or device acceptance of its own.
+
+## Process recovery
+
+Accepted starts use `START_STICKY`. A null-intent delivery after Android recreates the service is
+admitted only while the retained opt-in, ordinary requirements and startup budget permit it. These
+checks, budget commit, ticket reservation, and foreground setup share the session monitor with Stop.
+Recovery does not write the opt-in On or reuse an observer/clock from the dead process. Pending and
+active delivery ownership prevents stale or duplicate deliveries from cancelling newer work.
+
+`NativeHomeRecoveryBudget` persists three private scalar values: boot count, elapsed window start,
+and process-recreation admission count. At most two such admissions are allowed in one anchored
+ten-minute window. Boot receiver starts are not charged to this count.
+This is a fixed window, not a rolling rate limit. New boots and expired windows can admit a new
+window; malformed, partial, unreadable or uncommittable state fails closed. A newly admitted explicit
+UI/shell Start may reset the budget; boot startup and process recreation do not reset a same-window
+budget. Expiry does not schedule another attempt. There is no watchdog, new idle polling, usage
+history database, or added permission.
+
+On the reviewed Android 10 firmware, a sticky service record can retain its foreground flag after
+process death. A new `startForeground` can then omit the fresh UsageEvents foreground-start event
+needed for calibration. Only an admitted null-intent recovery normalizes this app's own foreground
+state with `stopForeground(false)` immediately before the existing `startForeground`, under the
+same session barrier. It does not change another service, clock timing, Home policy or firmware pins.
+This mechanism passed a controlled recreation trial in a separate local build; the merged source.3
+snapshot still needs its own authorized hardware trial.
+
+Explicit Stop invalidates pending work, attempts to cancel Android's service restart, then commits
+Off under the same monitor. A failed Off commit remains visibly unverified, even if the service is
+absent. A request already sent before Stop acquired the monitor cannot be recalled.
+
+## Compatibility and permissions
 
 `NativeHomeAccess` checks Usage Access, unlocked-user state, stock Home version and its enabled/default
 activity, and refuses any enabled accessibility service. `NativeHomeClockPrerequisites` additionally

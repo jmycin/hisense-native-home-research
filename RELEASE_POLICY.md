@@ -35,8 +35,9 @@ remain host-preflight assumptions. There is no self-contained deployment
 controller. Any enabled accessibility service makes this experiment unsupported;
 needed accessibility features must not be disabled for it.
 
-The earlier native2 implementation had acceptance on one unit. The subsequent
-source packaging and preparation fixes have no new hardware acceptance. JVM
+The earlier native2 implementation had acceptance on one unit, and a separate
+local recovery build later had the limited observations described in [Recovery](RECOVERY.md).
+The merged source.3 snapshot has no hardware acceptance of its own. JVM
 tests and a successful build do not exercise Android's full service lifecycle,
 permissions, receiver delivery or the physical remote. No support for other
 models, future versions or continuous maintenance is promised.

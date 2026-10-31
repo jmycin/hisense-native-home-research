@@ -84,31 +84,35 @@ public final class HomeNativeService extends Service {
             stopSelf();
             return START_NOT_STICKY;
         }
-        long ticket = intent == null ? -1 : intent.getLongExtra("session_ticket", -1);
+        final boolean processRecovery = intent == null;
+        final long ticket;
+        if (processRecovery) {
+            // Only Android's null recreation can claim retained, bounded startup admission.
+            ticket = NativeHomeAccess.processRecoveryTicket(this);
+            if (ticket < 0) return retainCurrentOrStop(startId);
+            intent = new Intent(this, HomeNativeService.class).setAction(START);
+        } else ticket = intent.getLongExtra("session_ticket", -1);
         if (!NativeHomeAccess.SESSION.startCurrent(ticket)) {
-            if (!running && !NativeHomeAccess.SESSION.activeOrStarting()) stopSelf(startId);
-            // A stale delivery must not stop a newer pending/calibrating observer. If truly idle,
-            // the startId form also avoids stopping any newer command Android has already queued.
-            return START_NOT_STICKY; // A Stop (or newer Start) invalidated this queued command.
+            return retainCurrentOrStop(startId); // Never cancel newer accepted service work.
         }
         if (Build.VERSION.SDK_INT != 29 || intent == null || !START.equals(intent.getAction())
                 || !NativeHomeAccess.enabled(this) || NativeHomeAccess.problem(this) != null) {
             failStart(ticket, "requirements_unavailable");
-            return START_NOT_STICKY;
+            return retainCurrentOrStop(startId);
         }
         if (!NativeHomeAccess.SESSION.claimStart(ticket)) {
-            return START_NOT_STICKY; // A repeated delivery of this pending Start changes nothing.
+            return retainCurrentOrStop(startId); // Duplicate delivery neither reinitializes nor downgrades it.
         }
         serviceTicket = ticket; // Even destruction before worker creation must release this reservation.
         if (running || thread != null) {
             failStart(ticket, "observer_teardown_pending"); // Never reuse an older observer after Stop/new Start.
-            return START_NOT_STICKY;
+            return retainCurrentOrStop(startId);
         }
         try {
             String prerequisite = NativeHomeClockPrerequisites.problem();
             if (prerequisite != null) {
                 failStart(ticket, prerequisite);
-                return START_NOT_STICKY;
+                return retainCurrentOrStop(startId);
             }
             NotificationManager notifications = getSystemService(NotificationManager.class);
             if (notifications == null) throw new IllegalStateException("No notification service");
@@ -128,10 +132,11 @@ public final class HomeNativeService extends Service {
                     .setContentIntent(open).setOngoing(true)
                     .addAction(new Notification.Action.Builder(null,
                             getString(R.string.native_home_stop), stop).build()).build();
-            if (!NativeHomeAccess.SESSION.duringStart(ticket,
+            if (!NativeHomeAccess.SESSION.duringStart(ticket, processRecovery,
+                    () -> NativeHomeAccess.enabled(this),
+                    () -> stopForeground(false),
                     () -> startForeground(7310, notification))) {
-                if (!NativeHomeAccess.SESSION.activeOrStarting()) stopSelf(startId);
-                return START_NOT_STICKY;
+                return retainCurrentOrStop(startId);
             }
             clockError = "pending";
             calibrationBegan = SystemClock.elapsedRealtime();
@@ -148,8 +153,20 @@ public final class HomeNativeService extends Service {
             worker.post(() -> observeCalibrationSentinel(ticket));
         } catch (RuntimeException unavailable) {
             failStart(ticket, "query_failed");
+            return retainCurrentOrStop(startId);
         }
-        return START_NOT_STICKY; // No restart loop after process death.
+        // Android may recreate accepted service work; explicit Stop/failure still cancels it.
+        // Recovery is startup-only and budgeted, with no watchdog or extra idle polling.
+        return START_STICKY;
+    }
+
+    private int retainCurrentOrStop(int startId) {
+        synchronized (NativeHomeAccess.SESSION) {
+            if (NativeHomeAccess.SESSION.retainService(serviceTicket,
+                    NativeHomeAccess.enabled(this))) return START_STICKY;
+            stopSelf(startId); // Does not cancel a newer startId already queued by Android.
+            return START_NOT_STICKY;
+        }
     }
 
     private boolean current(long token) {

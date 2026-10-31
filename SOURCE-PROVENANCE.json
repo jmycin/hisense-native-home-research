@@ -2,9 +2,9 @@
   "upstream": "https://github.com/Gathin23/cleanyourtv",
   "public_source_base_commit": "0bb7f7edbf53349c7975a29495515453ed850526",
   "not_rebased_onto_current_upstream": true,
-  "source_version": "2.6-hisense-native.2-source.2",
-  "implementation": "native2 clock-calibrated Home trial plus narrow source.2 preparation fixes",
-  "earlier_device_acceptance": "Earlier native2 local implementation only; not this source revision",
+  "source_version": "2.6-hisense-native.2-source.3",
+  "implementation": "native2 clock-calibrated Home trial with source.2 preparation fixes and guarded process-recovery port",
+  "earlier_device_acceptance": "Earlier native2 owner acceptance and separate local recovery.2 observations on one reviewed unit; neither validates this merged source.3 snapshot",
   "no_tv_install_or_hardware_acceptance_of_this_snapshot": true,
   "application_id": "com.gathin.tvhome",
   "distribution_scope": "Research source only; no binary, installer, coexistence or maintenance promise",
@@ -12,14 +12,30 @@
   "native_opt_in_default": false,
   "differences_from_earlier_tv_build": [
     "Public baseline config replaces personal appearance; empty legacy redirect class retained.",
-    "Start admission/delivery is idempotent; pending ownership is released on service destruction.",
-    "Matching session barriers guard stale asynchronous failure Stop/error writes.",
-    "Control UI reports runtime/clock readiness separately from saved boot opt-in.",
-    "Accessibility wording accurately excludes any enabled service; needed accessibility stays needed.",
-    "26 JVM regressions added; these are not Android integration or hardware tests.",
-    "Source.2 version and unsigned release build; automatic install/debloat scripts excluded."
+    "Source.2 idempotent Start/delivery, pending ownership release, matching stale-failure barriers and runtime status are preserved.",
+    "Guarded START_STICKY process recreation consumes a committed private budget under the Stop session monitor; recovery cannot enable an Off choice.",
+    "At most two null-intent process-recreation admissions per anchored ten-minute window; boot starts are not charged and do not reset a same-window budget.",
+    "Only an admitted null-intent recovery normalizes this app's own foreground state before fresh calibration; firmware pins and Home policy timing stay unchanged.",
+    "Explicit Stop cancels service restart and attempts durable Off; failed persistence remains unverified.",
+    "Recovery/foreground and merge-interaction JVM regressions supplement source.2 coverage; see BUILD.md for host check results.",
+    "Source.3 version and unsigned release build; automatic install/debloat scripts excluded."
   ],
-  "comparison_to_earlier_native2_app_src": {
+  "owner_specific_data_included": false,
+  "theme_or_wallpaper_pack_included": false,
+  "hardware_limits": [
+    "This merged source.3 snapshot has no TV install or hardware acceptance; its JVM checks do not exercise actual Android service scheduling, firmware event publication, receiver delivery or remote hardware.",
+    "Separate local recovery.2 trial: one controlled app-process crash recovered in about seven seconds without a manual revival; this does not establish the original death cause or every OEM/low-memory kill path.",
+    "Separate local recovery.2 reboot observation followed owner Wi-Fi reconnection; the observer was ready before a maintenance Start. Screensaver acceptance used Start now, not an inactivity-timeout wait.",
+    "Physical PS5/audio/HDR, held volume, remote hardware and phone casting were not re-tested in that recovery trial.",
+    "An already-visible Google Home may lack fresh resume evidence; open the app named Home from Google's Apps tab as fallback.",
+    "Budget expiry schedules no retry, and force-stop is not the sticky-recreation path.",
+    "Immediate Stop/Start during observer teardown fails closed and requires retry after teardown.",
+    "A stale in-flight clock confirmation can conservatively invalidate its observer; session barriers reject stale Stop/error writes, not every transient availability loss.",
+    "Research source retains the original package identity; no independent installer or coexistence claim."
+  ],
+  "publication_scope": "Owner-approved research source only; no binary, installer, expanded support or hardware-validation claim",
+  "research_source_base_commit": "6cbb2c540406872110d4e80e390ced93d4fe694d",
+  "historical_source_2_comparison_to_earlier_native2_app_src": {
     "byte_identical_count": 159,
     "changed_paths": [
       "app/src/main/java/com/gathin/tvhome/HomeNativeControlActivity.java",
@@ -35,14 +51,5 @@
       "app/src/test/java/com/gathin/tvhome/NativeHomeStatusTest.java"
     ],
     "personal_config_read_or_copied": false
-  },
-  "owner_specific_data_included": false,
-  "theme_or_wallpaper_pack_included": false,
-  "hardware_limits": [
-    "Pure JVM admission/session/status regression coverage does not exercise actual Android service delivery or UI lifecycle.",
-    "Immediate Stop/Start during observer teardown fails closed and requires retry after teardown.",
-    "A stale in-flight clock confirmation can conservatively invalidate its observer; the new guard rejects stale Stop/error writes, not every transient availability loss.",
-    "Research source retains the original package identity; no independent installer or coexistence claim."
-  ],
-  "publication_scope": "Owner-approved research source only; no binary, installer, expanded support or hardware-validation claim"
+  }
 }
